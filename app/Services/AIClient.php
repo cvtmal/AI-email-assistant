@@ -11,6 +11,7 @@ use Illuminate\Http\Client\Factory;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
+use Log;
 
 final class AIClient implements AIClientInterface
 {
@@ -138,7 +139,7 @@ TXT,
     public function generateReplyWithOptions(array $email, array $options, array $chatHistory = []): array
     {
         $instruction = $this->buildInstructionFromOptions($options);
-        \Log::info('Generated instruction from options:', ['instruction' => $instruction]);
+        Log::info('Generated instruction from options:', ['instruction' => $instruction]);
 
         return $this->generateReply($email, $instruction, $chatHistory);
     }

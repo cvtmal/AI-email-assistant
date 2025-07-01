@@ -41,11 +41,11 @@ return [
 
         'smtp' => [
             'transport' => 'smtp',
-            'scheme' => env('MAIL_SCHEME', env('SMTP_ENCRYPTION', 'tls')),
+            'scheme' => env('MAIL_SCHEME', 'smtps'),
             'url' => env('MAIL_URL'),
             'host' => env('MAIL_HOST', env('SMTP_HOST', '127.0.0.1')),
             'port' => (int) env('MAIL_PORT', env('SMTP_PORT', 2525)),
-            'encryption' => env('MAIL_ENCRYPTION', env('SMTP_ENCRYPTION', 'tls')),
+            'encryption' => env('MAIL_ENCRYPTION', 'ssl'),
             'username' => env('MAIL_USERNAME', env('SMTP_USERNAME')),
             'password' => env('MAIL_PASSWORD', env('SMTP_PASSWORD')),
             'timeout' => null,
