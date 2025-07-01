@@ -93,6 +93,8 @@ export default function ReplyRefinementControls({
       const urgencyOption = urgencyOptions.find(u => u.value === options.urgency);
       if (urgencyOption && options.urgency === 'high') {
         parts.push('and convey appropriate urgency');
+      } else if (urgencyOption && options.urgency === 'low') {
+        parts.push('and indicate this is low priority');
       }
     }
     
