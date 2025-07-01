@@ -99,8 +99,14 @@ export default function Show({ email, latestReply, chatHistory = [], signature =
       ? { refinementOptions } 
       : { instruction: generateData.instruction };
     
-    generatePost(`/imapengine-inbox/${email.id}/generate-reply?account=${account}`, {
-      data: requestData,
+    console.log('Frontend sending data:', {
+      useAdvancedControls,
+      requestData,
+      refinementOptions
+    });
+    
+    // Use router.post directly to ensure proper data transmission
+    router.post(`/imapengine-inbox/${email.id}/generate-reply?account=${account}`, requestData, {
       preserveScroll: true,
       onSuccess: () => {
         setIsGenerating(false);

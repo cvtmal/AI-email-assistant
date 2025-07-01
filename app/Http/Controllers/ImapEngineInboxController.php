@@ -105,9 +105,11 @@ final readonly class ImapEngineInboxController
 
         // Generate reply using AI - support both methods
         if (! empty($validated['refinementOptions'])) {
+            \Log::info('Using refinement options:', $validated['refinementOptions']);
             $result = $this->aiClient->generateReplyWithOptions($email, $validated['refinementOptions'], $history);
         } else {
             $instruction = $validated['instruction'] ?? 'Generate a reply to this email.';
+            \Log::info('Using simple instruction:', ['instruction' => $instruction]);
             $result = $this->aiClient->generateReply($email, $instruction, $history);
         }
 

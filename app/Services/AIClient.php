@@ -138,6 +138,7 @@ TXT,
     public function generateReplyWithOptions(array $email, array $options, array $chatHistory = []): array
     {
         $instruction = $this->buildInstructionFromOptions($options);
+        \Log::info('Generated instruction from options:', ['instruction' => $instruction]);
 
         return $this->generateReply($email, $instruction, $chatHistory);
     }
