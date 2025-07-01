@@ -138,8 +138,8 @@ return [
     */
     'options' => [
         'delimiter' => env('IMAP_OPTIONS_DELIMITER', '/'),
-        'fetch' => env('IMAP_OPTIONS_FETCH', \Webklex\PHPIMAP\IMAP::FT_PEEK),
-        'sequence' => env('IMAP_OPTIONS_SEQUENCE', \Webklex\PHPIMAP\IMAP::ST_UID),
+        'fetch' => env('IMAP_OPTIONS_FETCH', Webklex\PHPIMAP\IMAP::FT_PEEK),
+        'sequence' => env('IMAP_OPTIONS_SEQUENCE', Webklex\PHPIMAP\IMAP::ST_UID),
         'fetch_order' => env('IMAP_OPTIONS_FETCH_ORDER', 'asc'),
         'fetch_limit' => env('IMAP_OPTIONS_FETCH_LIMIT', 0),
         'open' => [
@@ -157,20 +157,20 @@ return [
     */
     'events' => [
         'message' => [
-            'new' => \Webklex\PHPIMAP\Events\MessageNewEvent::class,
-            'moved' => \Webklex\PHPIMAP\Events\MessageMovedEvent::class,
-            'copied' => \Webklex\PHPIMAP\Events\MessageCopiedEvent::class,
-            'deleted' => \Webklex\PHPIMAP\Events\MessageDeletedEvent::class,
-            'restored' => \Webklex\PHPIMAP\Events\MessageRestoredEvent::class,
+            'new' => Webklex\PHPIMAP\Events\MessageNewEvent::class,
+            'moved' => Webklex\PHPIMAP\Events\MessageMovedEvent::class,
+            'copied' => Webklex\PHPIMAP\Events\MessageCopiedEvent::class,
+            'deleted' => Webklex\PHPIMAP\Events\MessageDeletedEvent::class,
+            'restored' => Webklex\PHPIMAP\Events\MessageRestoredEvent::class,
         ],
         'folder' => [
-            'new' => \Webklex\PHPIMAP\Events\FolderNewEvent::class,
-            'moved' => \Webklex\PHPIMAP\Events\FolderMovedEvent::class,
-            'deleted' => \Webklex\PHPIMAP\Events\FolderDeletedEvent::class,
+            'new' => Webklex\PHPIMAP\Events\FolderNewEvent::class,
+            'moved' => Webklex\PHPIMAP\Events\FolderMovedEvent::class,
+            'deleted' => Webklex\PHPIMAP\Events\FolderDeletedEvent::class,
         ],
         'flag' => [
-            'new' => \Webklex\PHPIMAP\Events\FlagNewEvent::class,
-            'deleted' => \Webklex\PHPIMAP\Events\FlagDeletedEvent::class,
+            'new' => Webklex\PHPIMAP\Events\FlagNewEvent::class,
+            'deleted' => Webklex\PHPIMAP\Events\FlagDeletedEvent::class,
         ],
     ],
 
