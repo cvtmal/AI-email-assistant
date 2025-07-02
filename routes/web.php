@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\EmailActivityController;
 use App\Http\Controllers\ImapEngineInboxController;
+use App\Http\Controllers\QuickReplyTemplateController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -23,6 +24,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('email-activity', [EmailActivityController::class, 'index'])->name('email-activity.index');
     Route::get('api/email-activity', [EmailActivityController::class, 'apiActivity'])->name('email-activity.api');
+
+    Route::get('settings/quick-reply-templates', [QuickReplyTemplateController::class, 'index'])->name('quick-reply-templates.index');
+    Route::post('settings/quick-reply-templates', [QuickReplyTemplateController::class, 'store'])->name('quick-reply-templates.store');
+    Route::put('settings/quick-reply-templates/{id}', [QuickReplyTemplateController::class, 'update'])->name('quick-reply-templates.update');
+    Route::delete('settings/quick-reply-templates/{id}', [QuickReplyTemplateController::class, 'destroy'])->name('quick-reply-templates.destroy');
+    Route::post('settings/quick-reply-templates/create-defaults', [QuickReplyTemplateController::class, 'createDefaults'])->name('quick-reply-templates.create-defaults');
 });
 
 require __DIR__.'/settings.php';

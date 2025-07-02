@@ -23,6 +23,14 @@ interface ChatMessage {
   content: string;
 }
 
+interface QuickReplyTemplate {
+  id: number;
+  name: string;
+  template_text: string;
+  is_active: boolean;
+  sort_order: number;
+}
+
 interface EmailShowProps extends PageProps {
   email: EmailDetails;
   latestReply?: string;
@@ -31,9 +39,10 @@ interface EmailShowProps extends PageProps {
   message?: string;
   success?: boolean;
   account: string;
+  quickReplyTemplates?: QuickReplyTemplate[];
 }
 
-export default function Show({ email, latestReply, chatHistory = [], signature = '', message, success, account }: EmailShowProps) {
+export default function Show({ email, latestReply, chatHistory = [], signature = '', message, success, account, quickReplyTemplates = [] }: EmailShowProps) {
   // When email is not found
   if (!email) {
     return (
@@ -82,6 +91,7 @@ export default function Show({ email, latestReply, chatHistory = [], signature =
 
   const { data: generateData, setData: setGenerateData, post: generatePost } = useForm({
     instruction: '',
+    templateId: null as number | null,
     refinementOptions: null as RefinementOptions | null,
   });
 
@@ -97,7 +107,10 @@ export default function Show({ email, latestReply, chatHistory = [], signature =
     // Prepare the data based on which method is being used
     const requestData = useAdvancedControls 
       ? { refinementOptions } 
-      : { instruction: generateData.instruction };
+      : { 
+          instruction: generateData.instruction,
+          templateId: generateData.templateId
+        };
     
     console.log('Frontend sending data:', {
       useAdvancedControls,
@@ -149,6 +162,24 @@ export default function Show({ email, latestReply, chatHistory = [], signature =
         onSuccess: () => {
           setIsGenerating(false);
           setGenerateData('instruction', '');
+        },
+        onError: () => {
+          setIsGenerating(false);
+        },
+      },
+    );
+  };
+
+  const handleQuickReplyTemplate = (template: QuickReplyTemplate) => {
+    setIsGenerating(true);
+    router.post(
+      `/imapengine-inbox/${email.id}/generate-reply?account=${account}`,
+      { templateId: template.id },
+      {
+        preserveScroll: true,
+        onSuccess: () => {
+          setIsGenerating(false);
+          setGenerateData('templateId', null);
         },
         onError: () => {
           setIsGenerating(false);
@@ -264,6 +295,28 @@ export default function Show({ email, latestReply, chatHistory = [], signature =
                     placeholder="e.g. Answer in a friendly tone"
                     required
                   />
+                  {/* Quick Reply Templates */}
+                  {quickReplyTemplates.length > 0 && (
+                    <div className="mb-4">
+                      <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Quick Reply Templates</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {quickReplyTemplates.map((template) => (
+                          <Button
+                            key={template.id}
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleQuickReplyTemplate(template)}
+                            disabled={isGenerating}
+                            className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 hover:text-blue-800 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-900/40"
+                          >
+                            {template.name}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Quick action buttons */}
                   <div className="flex flex-wrap gap-2">
                     <Button type="button" variant="ghost" size="sm" onClick={() => quickGenerate('answer')}>
