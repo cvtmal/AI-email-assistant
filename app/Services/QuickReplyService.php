@@ -41,7 +41,7 @@ final readonly class QuickReplyService
     /**
      * Update an existing quick reply template
      *
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     public function updateTemplate(int $templateId, array $data): bool
     {
