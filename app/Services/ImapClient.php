@@ -70,8 +70,9 @@ final readonly class ImapClient implements ImapClientInterface
 
             logger()->info('Getting INBOX folder');
             $folder = $client->getFolder('INBOX');
-            if (! $folder) {
+            if (!$folder instanceof \Webklex\PHPIMAP\Folder) {
                 logger()->error('Failed to get INBOX folder');
+
                 return collect([]);
             }
 
@@ -247,8 +248,9 @@ final readonly class ImapClient implements ImapClientInterface
 
             logger()->info('Getting INBOX folder');
             $folder = $client->getFolder('INBOX');
-            if (! $folder) {
+            if (!$folder instanceof \Webklex\PHPIMAP\Folder) {
                 logger()->error('Failed to get INBOX folder');
+
                 return null;
             }
 

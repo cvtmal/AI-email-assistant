@@ -45,6 +45,7 @@ final class EmailReply extends Model
 
     /**
      * Get the user that owns the email reply.
+     *
      * @return BelongsTo<User, $this>
      */
     public function user(): BelongsTo
@@ -54,14 +55,15 @@ final class EmailReply extends Model
 
     /**
      * Scope to get replies for a specific user and account.
-     * @param \Illuminate\Database\Eloquent\Builder<EmailReply> $query
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<EmailReply>  $query
      * @return \Illuminate\Database\Eloquent\Builder<EmailReply>
      */
     public function scopeForUserAndAccount(\Illuminate\Database\Eloquent\Builder $query, int $userId, ?string $account = null): \Illuminate\Database\Eloquent\Builder
     {
         $query->where('user_id', $userId);
 
-        if ($account) {
+        if ($account !== null && $account !== '' && $account !== '0') {
             $query->where('account', $account);
         }
 
@@ -70,7 +72,8 @@ final class EmailReply extends Model
 
     /**
      * Scope to get recent activity for a user.
-     * @param \Illuminate\Database\Eloquent\Builder<EmailReply> $query
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<EmailReply>  $query
      * @return \Illuminate\Database\Eloquent\Builder<EmailReply>
      */
     public function scopeRecentActivity(\Illuminate\Database\Eloquent\Builder $query, int $userId, int $limit = 10): \Illuminate\Database\Eloquent\Builder

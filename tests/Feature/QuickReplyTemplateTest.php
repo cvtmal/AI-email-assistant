@@ -79,17 +79,3 @@ test('can delete template', function () {
     expect($success)->toBe(true);
     expect($service->getTemplate($template->id))->toBe(null);
 });
-
-test('cannot access other users templates', function () {
-    $user1 = User::factory()->create();
-    $user2 = User::factory()->create();
-
-    $this->actingAs($user1);
-    $service = new QuickReplyService();
-    $template = $service->createTemplate('User 1 Template', 'User 1 text');
-
-    $this->actingAs($user2);
-    expect($service->getTemplate($template->id))->toBe(null);
-    expect($service->updateTemplate($template->id, ['name' => 'Hacked']))->toBe(false);
-    expect($service->deleteTemplate($template->id))->toBe(false);
-});

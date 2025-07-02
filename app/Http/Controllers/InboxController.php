@@ -10,7 +10,6 @@ use App\Contracts\MailerServiceInterface;
 use App\Models\EmailReply;
 use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Inertia\Inertia;
 use Inertia\Response;
 

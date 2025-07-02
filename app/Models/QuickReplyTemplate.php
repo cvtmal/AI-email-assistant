@@ -22,6 +22,9 @@ final class QuickReplyTemplate extends Model
         'sort_order' => 'integer',
     ];
 
+    /**
+     * @return BelongsTo<User, $this>
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

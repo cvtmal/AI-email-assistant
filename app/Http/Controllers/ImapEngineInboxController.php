@@ -117,16 +117,16 @@ final readonly class ImapEngineInboxController
             'templateId_empty' => empty($validated['templateId']),
             'validated_data' => $validated,
         ]);
-        
+
         if (! empty($validated['templateId'])) {
             $template = $this->quickReplyService->getTemplate($validated['templateId']);
             Log::info('Template retrieval result', [
-                'template_found' => $template !== null,
+                'template_found' => $template instanceof \App\Models\QuickReplyTemplate,
                 'template_id' => $validated['templateId'],
-                'template_data' => $template ? $template->toArray() : null,
+                'template_data' => $template instanceof \App\Models\QuickReplyTemplate ? $template->toArray() : null,
             ]);
-            
-            if ($template !== null) {
+
+            if ($template instanceof \App\Models\QuickReplyTemplate) {
                 $instruction = "Use this template as the basis for your reply, adapting it to respond to the specific email context: \"{$template->template_text}\"";
                 Log::info('Generated template instruction', ['instruction' => $instruction]);
             }

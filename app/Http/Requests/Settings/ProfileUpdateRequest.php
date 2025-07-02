@@ -20,7 +20,7 @@ final class ProfileUpdateRequest extends FormRequest
     {
         /** @var User|null $user */
         $user = $this->user();
-        
+
         return [
             'name' => ['required', 'string', 'max:255'],
 

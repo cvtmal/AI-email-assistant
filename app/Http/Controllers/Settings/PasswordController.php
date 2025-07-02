@@ -33,7 +33,7 @@ final class PasswordController
 
         /** @var \App\Models\User $user */
         $user = $request->user();
-        
+
         $user->update([
             'password' => Hash::make($validated['password']),
         ]);
