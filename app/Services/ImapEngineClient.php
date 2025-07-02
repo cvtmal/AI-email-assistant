@@ -50,7 +50,7 @@ final readonly class ImapEngineClient implements ImapClientInterface
                 return collect([]);
             }
 
-            return collect($messages)->map(function ($message) {
+            return collect($messages)->map(function ($message): array {
                 try {
                     // Format the message data for consistency with the webklex implementation
                     $subject = $message->subject() ?? 'No Subject';
@@ -60,10 +60,10 @@ final readonly class ImapEngineClient implements ImapClientInterface
 
                     // Get date string
                     $date = $message->date();
-                    $dateString = $date ? $date->format('c') : date('c');
+                    $dateString = $date instanceof \Carbon\CarbonInterface ? $date->format('c') : date('c');
 
                     return [
-                        'id' => $message->uid(),
+                        'id' => (string) $message->uid(),
                         'subject' => $subject,
                         'from' => $fromAddress,
                         'date' => $dateString,
@@ -75,7 +75,7 @@ final readonly class ImapEngineClient implements ImapClientInterface
                     ]);
 
                     return [
-                        'id' => $message->uid() ?? 'error',
+                        'id' => (string) ($message->uid() !== 0 ? $message->uid() : 'error'),
                         'subject' => 'Error: Unable to process email',
                         'from' => 'Unknown',
                         'date' => date('c'),
@@ -133,7 +133,7 @@ final readonly class ImapEngineClient implements ImapClientInterface
             }
 
             // If still not found, try searching all messages
-            if (! $message) {
+            if (! $message instanceof \DirectoryTree\ImapEngine\Message) {
                 Log::info('UID search failed, trying to scan all messages', ['account' => $accountId]);
                 try {
                     $allMessages = $inbox->messages()->withHeaders()->withBody()->get();
@@ -149,7 +149,7 @@ final readonly class ImapEngineClient implements ImapClientInterface
                 }
             }
 
-            if (! $message) {
+            if (! $message instanceof \DirectoryTree\ImapEngine\MessageInterface) {
                 Log::warning('No message found with ID: '.$messageId);
 
                 return null;
@@ -165,7 +165,7 @@ final readonly class ImapEngineClient implements ImapClientInterface
 
             // Get date string
             $date = $message->date();
-            $dateString = $date ? $date->format('c') : date('c');
+            $dateString = $date instanceof \Carbon\CarbonInterface ? $date->format('c') : date('c');
 
             // Get message body
             $textBody = $message->text() ?? '';
@@ -177,7 +177,7 @@ final readonly class ImapEngineClient implements ImapClientInterface
             ]);
 
             return [
-                'id' => $message->uid(),
+                'id' => (string) $message->uid(),
                 'subject' => $subject,
                 'from' => $fromAddress,
                 'to' => $toAddress,

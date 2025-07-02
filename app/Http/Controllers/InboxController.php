@@ -16,21 +16,7 @@ use Inertia\Response;
 
 final readonly class InboxController
 {
-    private AIClientInterface $aiClient;
-
-    private MailerServiceInterface $mailerService;
-
-    private ImapClientInterface $imapClient;
-
-    public function __construct(
-        AIClientInterface $aiClient,
-        MailerServiceInterface $mailerService,
-        ImapClientInterface $imapClient
-    ) {
-        $this->aiClient = $aiClient;
-        $this->mailerService = $mailerService;
-        $this->imapClient = $imapClient;
-    }
+    public function __construct(private AIClientInterface $aiClient, private MailerServiceInterface $mailerService, private ImapClientInterface $imapClient) {}
 
     /**
      * Display a listing of the inbox emails.
@@ -41,7 +27,7 @@ final readonly class InboxController
     public function index(Request $request, ?string $account = null): Response
     {
         try {
-            /** @var object|Collection<int, array{id: string, subject: string, from: string, to: string, date: \Carbon\Carbon, body: string, html: ?string, message_id: string}> $emails */
+            // Get emails from IMAP client
             $this->imapClient->getInboxEmails();
 
             // Determine the account to use
@@ -55,7 +41,7 @@ final readonly class InboxController
                 'host' => $imap_host,
                 'username' => $imap_username,
                 'account' => $accountId,
-                'client_class' => get_class($this->imapClient),
+                'client_class' => $this->imapClient::class,
             ]);
 
             // Get emails with detailed logging
@@ -63,27 +49,22 @@ final readonly class InboxController
             $emails = $this->imapClient->getInboxEmails($accountId);
 
             // Log the emails that were retrieved
-            logger()->info('Retrieved '.($emails instanceof Collection ? $emails->count() : count($emails)).' emails', [
-                'sample_emails' => $emails instanceof Collection
-                    ? $emails->take(3)->map(function ($email) {
-                        return [
-                            'subject' => $email['subject'] ?? 'No Subject',
-                            'from' => $email['from'] ?? 'Unknown',
-                            'has_date' => isset($email['date']) ? 'yes' : 'no',
-                            'date_type' => isset($email['date']) ? gettype($email['date']) : 'undefined',
-                        ];
-                    })->toArray()
-                    : array_slice($emails, 0, 3),
+            logger()->info('Retrieved '.$emails->count().' emails', [
+                'sample_emails' => $emails->take(3)->map(fn ($email): array => [
+                    'subject' => $email['subject'],
+                    'from' => $email['from'],
+                    'has_date' => 'yes',
+                    'date_type' => gettype($email['date']),
+                ])->toArray(),
             ]);
 
-            // Check if we have any emails, handling both Collection and array cases
-            $isEmpty = $emails instanceof Collection ? $emails->isEmpty() : empty($emails);
-            if ($isEmpty) {
+            // Check if we have any emails
+            if ($emails->isEmpty()) {
                 logger()->warning('No emails found in IMAP inbox');
             }
 
             // Ensure emails is a proper array for JSON serialization
-            $emailsArray = $emails instanceof Collection ? $emails->toArray() : $emails;
+            $emailsArray = $emails->toArray();
 
             // Add detailed debugging to check the structure of each email
             foreach ($emailsArray as $index => $email) {
@@ -105,11 +86,11 @@ final readonly class InboxController
 
                 // Ensure all values are strings or primitive types
                 foreach ($email as $key => $value) {
-                    if (is_object($value) || (is_array($value) && ! empty($value))) {
+                    if (is_object($value) || (is_array($value) && $value !== [])) {
                         logger()->error('Non-primitive value found in email data', [
                             'key' => $key,
                             'value_type' => gettype($value),
-                            'value' => is_object($value) ? get_class($value) : json_encode($value),
+                            'value' => get_debug_type($value),
                         ]);
 
                         // Convert to string to prevent React errors
@@ -151,7 +132,7 @@ final readonly class InboxController
         try {
             $email = $this->imapClient->getEmail($id, $accountId);
 
-            if (! $email) {
+            if ($email === null) {
                 logger()->warning('Email not found with ID: '.$id);
 
                 return Inertia::render('Inbox/NotFound');
@@ -161,10 +142,10 @@ final readonly class InboxController
 
             // Apply the same type safety check as in the index method
             foreach ($email as $key => $value) {
-                if (is_object($value) || (is_array($value) && ! empty($value) && ! is_string($value))) {
+                if (is_object($value) || is_array($value)) {
                     logger()->error('Non-primitive value found in email detail data', [
                         'key' => $key,
-                        'type' => is_object($value) ? get_class($value) : gettype($value),
+                        'type' => get_debug_type($value),
                     ]);
                 }
             }
@@ -172,12 +153,12 @@ final readonly class InboxController
             // Get any existing reply for this email and account
             $reply = EmailReply::query()
                 ->where('email_id', $id)
-                ->where(function ($query) use ($accountId) {
+                ->where(function ($query) use ($accountId): void {
                     $query->where('account', $accountId)
                         ->orWhereNull('account'); // For backward compatibility with existing replies
                 })
                 ->first();
-            $chatHistory = $reply?->chat_history ?? [];
+            $chatHistory = $reply->chat_history ?? [];
 
             return Inertia::render('Inbox/Show', [
                 'email' => $email,
@@ -220,19 +201,19 @@ final readonly class InboxController
         $accountId = $account ?? config('imap.default', 'default');
         $email = $this->imapClient->getEmail($id, $accountId);
 
-        if (! $email) {
+        if ($email === null) {
             return Inertia::render('Inbox/NotFound');
         }
 
         // Get any existing chat history for this email and account
         $reply = EmailReply::query()
             ->where('email_id', $id)
-            ->where(function ($query) use ($accountId) {
+            ->where(function ($query) use ($accountId): void {
                 $query->where('account', $accountId)
                     ->orWhereNull('account'); // For backward compatibility
             })
             ->first();
-        $chatHistory = $reply?->chat_history ?? [];
+        $chatHistory = $reply->chat_history ?? [];
 
         // Generate reply using AI - support both methods
         if (! empty($validated['refinementOptions'])) {
@@ -272,7 +253,7 @@ final readonly class InboxController
         $accountId = $account ?? config('imap.default', 'default');
         $email = $this->imapClient->getEmail($id, $accountId);
 
-        if (! $email) {
+        if ($email === null) {
             return Inertia::render('Inbox/NotFound');
         }
 

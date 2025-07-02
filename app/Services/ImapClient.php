@@ -53,7 +53,7 @@ final readonly class ImapClient implements ImapClientInterface
      *  id: string,
      *  subject: string,
      *  from: string,
-     *  date: \Carbon\Carbon,
+     *  date: string,
      *  message_id: string,
      * }>
      */
@@ -70,6 +70,10 @@ final readonly class ImapClient implements ImapClientInterface
 
             logger()->info('Getting INBOX folder');
             $folder = $client->getFolder('INBOX');
+            if (! $folder) {
+                logger()->error('Failed to get INBOX folder');
+                return collect([]);
+            }
 
             // Get account-specific options
             $options = config("imap.accounts.{$accountId}.options", []);
@@ -138,7 +142,7 @@ final readonly class ImapClient implements ImapClientInterface
                 return collect([]);
             }
 
-            return $messages->map(function (Message $message) {
+            return $messages->map(function (Message $message): array {
                 try {
                     // Get date and convert it to a string format
                     $dateAttribute = $message->getDate();
@@ -157,8 +161,8 @@ final readonly class ImapClient implements ImapClientInterface
                     $subject = $message->getSubject();
                     if (is_object($subject) && method_exists($subject, 'toString')) {
                         $subject = $subject->toString();
-                    } elseif (is_object($subject)) {
-                        $subject = (string) $subject;
+                    } elseif (is_object($subject) && method_exists($subject, '__toString')) {
+                        $subject = $subject->__toString();
                     }
                     $subject = $subject ?: 'No Subject';
 
@@ -166,14 +170,14 @@ final readonly class ImapClient implements ImapClientInterface
                     $messageIdValue = $message->getMessageId();
                     if (is_object($messageIdValue) && method_exists($messageIdValue, 'toString')) {
                         $messageIdValue = $messageIdValue->toString();
-                    } elseif (is_object($messageIdValue)) {
-                        $messageIdValue = (string) $messageIdValue;
+                    } elseif (is_object($messageIdValue) && method_exists($messageIdValue, '__toString')) {
+                        $messageIdValue = $messageIdValue->__toString();
                     }
 
                     // Handle from address
                     $from = $message->getFrom();
                     $fromAddress = 'Unknown';
-                    if ($from && ! empty($from) && isset($from[0]->mail)) {
+                    if ($from && isset($from[0]->mail)) {
                         $fromAddress = $from[0]->mail;
                     }
 
@@ -182,8 +186,8 @@ final readonly class ImapClient implements ImapClientInterface
                         'id' => (string) $message->getUid(),
                         'subject' => $subject,
                         'from' => $fromAddress,
-                        'date' => $dateString,
-                        'message_id' => $messageIdValue,
+                        'date' => $dateString ?: date('c'),
+                        'message_id' => $messageIdValue ?: '',
                     ];
                 } catch (Exception $e) {
                     logger()->error('Error processing message in getInboxEmails', [
@@ -221,7 +225,7 @@ final readonly class ImapClient implements ImapClientInterface
      *  subject: string,
      *  from: string,
      *  to: string,
-     *  date: \Carbon\Carbon,
+     *  date: string,
      *  body: string,
      *  html: ?string,
      *  message_id: string,
@@ -234,7 +238,7 @@ final readonly class ImapClient implements ImapClientInterface
             logger()->info('Attempting to retrieve email with ID: '.$messageId, ['account' => $accountId]);
 
             // Normalize the message ID to ensure it's a valid UID string
-            $normalizedId = mb_trim((string) $messageId);
+            $normalizedId = mb_trim($messageId);
             logger()->info('Normalized message ID: '.$normalizedId);
 
             $client = $this->getClient($accountId);
@@ -243,6 +247,10 @@ final readonly class ImapClient implements ImapClientInterface
 
             logger()->info('Getting INBOX folder');
             $folder = $client->getFolder('INBOX');
+            if (! $folder) {
+                logger()->error('Failed to get INBOX folder');
+                return null;
+            }
 
             logger()->info('Querying for message by UID: '.$normalizedId, ['account' => $accountId]);
 
@@ -259,7 +267,7 @@ final readonly class ImapClient implements ImapClientInterface
                         ->limit(3)
                         ->get();
 
-                    if ($messages && count($messages) > 0) {
+                    if ($messages->isNotEmpty()) {
                         $sampleUids = [];
                         foreach ($messages as $msg) {
                             $sampleUids[] = (string) $msg->getUid();
@@ -287,7 +295,7 @@ final readonly class ImapClient implements ImapClientInterface
                 }
 
                 // If direct fetch failed, try searching messages
-                if (! $message) {
+                if (! $message instanceof Message) {
                     logger()->info('UID fetch with getMessageByUid failed, trying all() method', ['account' => $accountId]);
                     try {
                         // Try with all() first as it's syntactically correct
@@ -365,7 +373,7 @@ final readonly class ImapClient implements ImapClientInterface
             $dateAttribute = $message->getDate();
             $dateString = null;
             if ($dateAttribute && method_exists($dateAttribute, 'first')) {
-                $dateValue = $dateAttribute->first();
+                $dateValue = is_object($dateAttribute) ? $dateAttribute->first() : null;
                 if ($dateValue instanceof DateTimeImmutable) {
                     $dateString = $dateValue->format('c'); // ISO 8601 date
                 } elseif ($dateValue) {
@@ -377,8 +385,8 @@ final readonly class ImapClient implements ImapClientInterface
             $subject = $message->getSubject();
             if (is_object($subject) && method_exists($subject, 'toString')) {
                 $subject = $subject->toString();
-            } elseif (is_object($subject)) {
-                $subject = (string) $subject;
+            } elseif (is_object($subject) && method_exists($subject, '__toString')) {
+                $subject = $subject->__toString();
             }
             $subject = $subject ?: 'No Subject';
 
@@ -386,8 +394,8 @@ final readonly class ImapClient implements ImapClientInterface
             $messageIdValue = $message->getMessageId();
             if (is_object($messageIdValue) && method_exists($messageIdValue, 'toString')) {
                 $messageIdValue = $messageIdValue->toString();
-            } elseif (is_object($messageIdValue)) {
-                $messageIdValue = (string) $messageIdValue;
+            } elseif (is_object($messageIdValue) && method_exists($messageIdValue, '__toString')) {
+                $messageIdValue = $messageIdValue->__toString();
             }
 
             logger()->info('Successfully retrieved email details', [
@@ -398,13 +406,13 @@ final readonly class ImapClient implements ImapClientInterface
             // Handle from and to addresses, ensuring they're strings
             $from = $message->getFrom();
             $fromAddress = 'Unknown';
-            if ($from && ! empty($from) && isset($from[0]->mail)) {
+            if ($from && isset($from[0]->mail)) {
                 $fromAddress = $from[0]->mail;
             }
 
             $to = $message->getTo();
             $toAddress = 'Unknown';
-            if ($to && ! empty($to) && isset($to[0]->mail)) {
+            if ($to && isset($to[0]->mail)) {
                 $toAddress = $to[0]->mail;
             }
 
@@ -413,10 +421,10 @@ final readonly class ImapClient implements ImapClientInterface
                 'subject' => $subject,
                 'from' => $fromAddress,
                 'to' => $toAddress,
-                'date' => $dateString,
+                'date' => $dateString ?: date('c'),
                 'body' => (string) $message->getTextBody(),
                 'html' => $message->getHtmlBody() ? (string) $message->getHtmlBody() : null,
-                'message_id' => $messageIdValue,
+                'message_id' => $messageIdValue ?: '',
             ];
         } catch (Exception $e) {
             logger()->error('Error retrieving email with ID: '.$messageId, [

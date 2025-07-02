@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('email_replies', function (Blueprint $table) {
+        Schema::table('email_replies', function (Blueprint $table): void {
             // Add user relationship
             $table->foreignId('user_id')->nullable()->after('id')->constrained()->onDelete('cascade');
 
@@ -42,7 +42,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('email_replies', function (Blueprint $table) {
+        Schema::table('email_replies', function (Blueprint $table): void {
             $table->dropForeign(['user_id']);
             $table->dropColumn([
                 'user_id',

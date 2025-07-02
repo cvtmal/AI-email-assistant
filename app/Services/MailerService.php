@@ -35,7 +35,7 @@ final class MailerService implements MailerServiceInterface
     {
         $subject = $this->formatReplySubject($email['subject']);
         $accountId = $account ?? 'default';
-        $mailerKey = $this->resolveMailerKey((string) $accountId);
+        $mailerKey = $this->resolveMailerKey($accountId);
         $userId = Auth::id();
 
         // Convert combined plain text (reply + optional signature) to safe HTML
@@ -60,10 +60,10 @@ final class MailerService implements MailerServiceInterface
 
             $mailer->to($email['from'])->send(new EmailReplyMailable(
                 replyContent: $replyHtml,
-                emailSubject: $subject,
                 recipientEmail: $email['from'],
                 originalMessageId: $email['message_id'],
-                account: $accountId
+                account: $accountId,
+                emailSubject: $subject
             ));
 
             // Update status to sent on success
@@ -140,30 +140,6 @@ final class MailerService implements MailerServiceInterface
             'damian' => 'smtp2',
             default => 'smtp',
         };
-    }
-
-    /**
-     * Append the account-specific signature to the reply content if missing.
-     *
-     * @param  string  $replyContent  The AI-generated reply without signature
-     * @param  string  $accountId  The logical account identifier (e.g. "info", "damian")
-     * @return string Reply content with signature appended (if not already present)
-     */
-    private function appendSignature(string $replyContent, string $accountId): string
-    {
-        $signature = config('signatures.'.$accountId) ?? config('signatures.default', '');
-        $signature = mb_trim($signature);
-
-        // Convert the plain-text reply to HTML (escape + nl2br)
-        $replyHtml = nl2br(e(mb_rtrim($replyContent)));
-
-        // Avoid appending if signature already present
-        if ($signature === '' || str_contains($replyHtml, $signature)) {
-            return $replyHtml;
-        }
-
-        // Separate reply and signature with a <br><br>
-        return $replyHtml.'<br><br>'.$signature;
     }
 
     /**

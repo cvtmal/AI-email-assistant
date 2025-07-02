@@ -14,8 +14,7 @@ final class ImapEngineServiceProvider extends ServiceProvider
         $this->app->register(BaseImapServiceProvider::class);
 
         // Merge our custom ImapEngine config into the 'imap' key that the package expects
-        $this->app['config']->set('imap', $this->app['config']->get('imapengine'));
+        $config = $this->app->make('config');
+        $config->set('imap', $config->get('imapengine'));
     }
-
-    public function boot(): void {}
 }

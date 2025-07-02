@@ -60,12 +60,10 @@ final class EmailActivityController
             ->groupBy('account', 'status')
             ->get()
             ->groupBy('account')
-            ->map(function ($accountGroup) {
-                return [
-                    'sent' => $accountGroup->where('status', 'sent')->sum('count'),
-                    'failed' => $accountGroup->where('status', 'failed')->sum('count'),
-                ];
-            });
+            ->map(fn ($accountGroup): array => [
+                'sent' => $accountGroup->where('status', 'sent')->sum('count'),
+                'failed' => $accountGroup->where('status', 'failed')->sum('count'),
+            ]);
 
         return Inertia::render('EmailActivity/Index', [
             'recentActivity' => $recentActivity,
@@ -78,7 +76,7 @@ final class EmailActivityController
     /**
      * Get email activity data for API calls (for real-time updates).
      */
-    public function apiActivity(Request $request)
+    public function apiActivity(Request $request): \Illuminate\Http\JsonResponse
     {
         $userId = Auth::id();
         $account = $request->query('account');

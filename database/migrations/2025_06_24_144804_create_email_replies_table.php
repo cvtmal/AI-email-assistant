@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('email_replies', function (Blueprint $table) {
+        Schema::create('email_replies', function (Blueprint $table): void {
             $table->id();
             $table->string('email_id')->index()->comment('Unique identifier for the email from IMAP');
             $table->json('chat_history')->nullable()->comment('JSON encoded chat history between user and AI');

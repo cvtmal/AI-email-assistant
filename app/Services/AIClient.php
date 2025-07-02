@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 use Log;
 
-final class AIClient implements AIClientInterface
+final readonly class AIClient implements AIClientInterface
 {
     private string $apiKey;
 
@@ -73,7 +73,7 @@ TXT,
         $messages = [$systemMessage];
 
         // If we have chat history, add it after the system message
-        if (! empty($chatHistory)) {
+        if ($chatHistory !== []) {
             array_push($messages, ...$chatHistory);
         } else {
             // If this is the first interaction, add the email context
@@ -98,7 +98,7 @@ TXT,
         $reply = $data['choices'][0]['message']['content'] ?? '';
 
         // Update the chat history with the new messages and AI response
-        if (empty($chatHistory)) {
+        if ($chatHistory === []) {
             $chatHistory[] = $emailContextMessage;
         }
 
@@ -261,7 +261,7 @@ TXT,
             $parts[] = 'convey appropriate urgency';
         }
 
-        if (empty($parts)) {
+        if ($parts === []) {
             return 'Refine this reply to make it better.';
         }
 

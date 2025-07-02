@@ -44,7 +44,7 @@ final readonly class ImapEngineInboxController
         $accountId = $account ?? config('imapengine.default', 'default');
         $email = $this->imapClient->getEmail($id, $accountId);
 
-        if (! $email) {
+        if ($email === null) {
             return Inertia::render('ImapEngineInbox/Show', [
                 'email' => null,
                 'error' => 'Email not found',
@@ -62,7 +62,7 @@ final readonly class ImapEngineInboxController
         return Inertia::render('ImapEngineInbox/Show', [
             'email' => $email,
             'latestReply' => $reply?->latest_ai_reply,
-            'chatHistory' => $reply?->chat_history ?? [],
+            'chatHistory' => $reply->chat_history ?? [],
             'signature' => config('signatures.'.$accountId) ?? config('signatures.default'),
             'account' => $accountId,
         ]);
@@ -71,7 +71,7 @@ final readonly class ImapEngineInboxController
     /**
      * Generate an AI reply for an email.
      */
-    public function generateReply(Request $request, string $id)
+    public function generateReply(Request $request, string $id): Response
     {
         $validated = $request->validate([
             'instruction' => ['nullable', 'string'],
@@ -87,7 +87,7 @@ final readonly class ImapEngineInboxController
         $accountId = $account ?? config('imapengine.default', 'default');
 
         $email = $this->imapClient->getEmail($id, $accountId);
-        if (! $email) {
+        if ($email === null) {
             return Inertia::render('ImapEngineInbox/Show', [
                 'email' => null,
                 'account' => $accountId,
@@ -101,7 +101,7 @@ final readonly class ImapEngineInboxController
             ->where('user_id', Auth::id())
             ->where('account', $accountId)
             ->first();
-        $history = $reply?->chat_history ?? [];
+        $history = $reply->chat_history ?? [];
 
         // Generate reply using AI - support both methods
         if (! empty($validated['refinementOptions'])) {
@@ -127,7 +127,7 @@ final readonly class ImapEngineInboxController
     /**
      * Send the AI reply.
      */
-    public function sendReply(Request $request, string $id)
+    public function sendReply(Request $request, string $id): Response|\Illuminate\Http\RedirectResponse
     {
         $validated = $request->validate([
             'reply' => ['required', 'string'],
@@ -138,7 +138,7 @@ final readonly class ImapEngineInboxController
         $accountId = $account ?? config('imapengine.default', 'default');
 
         $email = $this->imapClient->getEmail($id, $accountId);
-        if (! $email) {
+        if ($email === null) {
             return Inertia::render('ImapEngineInbox/Show', [
                 'email' => null,
                 'account' => $accountId,

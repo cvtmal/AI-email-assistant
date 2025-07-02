@@ -23,10 +23,10 @@ final class EmailReplyMailable extends Mailable
      */
     public function __construct(
         private readonly string $replyContent,
-        private readonly string $emailSubject,
         private readonly string $recipientEmail,
         private readonly string $originalMessageId,
         private readonly ?string $account = null,
+        string $emailSubject = '',
     ) {
         $this->subject($emailSubject);
     }
@@ -45,7 +45,7 @@ final class EmailReplyMailable extends Mailable
             ->to($this->recipientEmail)
             ->replyTo($fromAddress, $fromName)
             ->view('emails.reply-html', ['content' => $this->replyContent])
-            ->withSymfonyMessage(function ($message) {
+            ->withSymfonyMessage(function ($message): void {
                 $message->getHeaders()
                     ->addTextHeader('References', $this->originalMessageId)
                     ->addTextHeader('In-Reply-To', $this->originalMessageId);
